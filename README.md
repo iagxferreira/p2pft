@@ -35,33 +35,53 @@ This is not yet a complete decentralized bucket network: membership admission, r
 - Java 25+
 - Gradle (the repository is compatible with the mise-managed Gradle installation)
 
+## Main Commands
+
+Use the project wrapper or Makefile as the normal interface. They build with Java 25 automatically through mise.
+
+```bash
+./p2pft.sh init pool.yaml research-pool ./files 127.0.0.1 9000 <key-hex> 1073741824
+./p2pft.sh files pool.yaml
+./p2pft.sh upload pool.yaml ./files/photo.bin
+./p2pft.sh server 9000 received <key-hex>
+./p2pft.sh client 127.0.0.1 9000 ./photo.bin <key-hex>
+```
+
+Equivalent Makefile commands are available with `make help`, for example `make files CONFIG=pool.yaml` and `make upload CONFIG=pool.yaml FILE=./files/photo.bin`.
+
 ## Verify
 
 ```bash
 mise exec gradle@9.7.0 -- mise exec java@temurin-25.0.4+7 -- gradle test
 ```
 
-The same commands are available through the `Makefile`: `make test`, `make build`, `make cli-files CONFIG=pool.yaml`, `make cli-upload CONFIG=pool.yaml FILE=./files/photo.bin`, `make docker-build`, and `make docker-transfer`.
+The wrapper command is:
+
+```bash
+./p2pft.sh test
+```
+
+The equivalent Makefile command is `make test`.
 
 ## Client CLI
 
 Initialize one config per client. The command generates the Ed25519 identity and writes the private key to the YAML file; keep that file private.
 
 ```bash
-java -cp build/classes/java/main com.p2pft.client.P2PClientCli init \
+./p2pft.sh init \
   pool.yaml research-pool ./files 127.0.0.1 9000 <key-hex> 1073741824
 ```
 
 List files in the configured client directory:
 
 ```bash
-java -cp build/classes/java/main com.p2pft.client.P2PClientCli files pool.yaml
+./p2pft.sh files pool.yaml
 ```
 
 Upload a file using the endpoint, transfer key, and peer identity from the same config:
 
 ```bash
-java -cp build/classes/java/main com.p2pft.client.P2PClientCli upload pool.yaml ./files/photo.bin
+./p2pft.sh upload pool.yaml ./files/photo.bin
 ```
 
 The current `files` command lists the local client directory. A remote pool catalog and multi-node upload routing are separate protocol work; the current upload command uses the existing authenticated TCP prototype.
@@ -83,13 +103,13 @@ Generate a 32-byte key as hexadecimal, for example with `openssl rand -hex 32`.
 Start the segregated server:
 
 ```bash
-java -cp build/classes/java/main com.p2pft.server.P2PServer 9000 received <key-hex>
+./p2pft.sh server 9000 received <key-hex>
 ```
 
 Send a file with the segregated client:
 
 ```bash
-java -cp build/classes/java/main com.p2pft.client.P2PClient 127.0.0.1 9000 ./photo.bin <key-hex>
+./p2pft.sh client 127.0.0.1 9000 ./photo.bin <key-hex>
 ```
 
 The receiver writes the file only after decryption, chunk ordering, size, and whole-file digest checks succeed.
