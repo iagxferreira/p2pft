@@ -1,0 +1,5 @@
+.gradle/
+build/
+out/
+docker/received.bin
+*.log
