@@ -1,0 +1,21 @@
+services:
+  server:
+    build: .
+    command: ["com.p2pft.server.P2PServer", "9000", "/data/received", "${P2PFT_KEY:?set P2PFT_KEY to 64 hex characters}"]
+    volumes:
+      - received:/data/received
+    networks: [p2pft]
+
+  client:
+    build: .
+    depends_on: [server]
+    command: ["com.p2pft.client.P2PClient", "server", "9000", "/data/input/sample.bin", "${P2PFT_KEY:?set P2PFT_KEY to 64 hex characters}"]
+    volumes:
+      - ./docker/input:/data/input:ro
+    networks: [p2pft]
+
+networks:
+  p2pft:
+
+volumes:
+  received:
