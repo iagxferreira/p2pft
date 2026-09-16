@@ -43,6 +43,9 @@ public final class PoolIdentity {
 
     public String pool() { return pool; }
     public String peerId() { return Hashing.hex(Hashing.sha256(keys.getPublic().getEncoded())); }
+    public String sshFingerprint() {
+        return "SHA256:" + Base64.getUrlEncoder().withoutPadding().encodeToString(Hashing.sha256(keys.getPublic().getEncoded()));
+    }
     public String publicKey() { return Base64.getEncoder().encodeToString(keys.getPublic().getEncoded()); }
     public String privateKey() { return Base64.getEncoder().encodeToString(keys.getPrivate().getEncoded()); }
 

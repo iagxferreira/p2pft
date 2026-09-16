@@ -11,6 +11,7 @@ usage() {
     '  ./p2pft.sh files <config>' \
     '  ./p2pft.sh upload <config> <file>' \
     '  ./p2pft.sh server <port> <output-dir> <key-hex>' \
+    '  ./p2pft.sh pool-server <config> <lease-seconds>' \
     '  ./p2pft.sh client <host> <port> <file> <key-hex>' \
     '  ./p2pft.sh test | build | docker-build | docker-transfer'
 }
@@ -34,6 +35,10 @@ case "$command" in
   server)
     [[ $# -eq 3 ]] || { usage; exit 2; }
     make server PORT="$1" OUTPUT="$2" KEY="$3"
+    ;;
+  pool-server)
+    [[ $# -eq 2 ]] || { usage; exit 2; }
+    make pool-server CONFIG="$1" LEASE_SECONDS="$2"
     ;;
   client)
     [[ $# -eq 4 ]] || { usage; exit 2; }

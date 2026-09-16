@@ -38,6 +38,11 @@ public final class Discovery {
         logger.discoveryBroadcast(identity.value(), tcpPort);
     }
 
+    public static void announce(PoolIdentity identity, int tcpPort, TransferLogger logger) throws IOException {
+        announce(identity.peerId(), tcpPort);
+        logger.discoveryBroadcast(identity.peerId(), tcpPort);
+    }
+
     public static List<String> listen(Duration timeout) throws IOException {
         List<String> peers = new ArrayList<>();
         try (var socket = new DatagramSocket(PORT)) {

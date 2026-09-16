@@ -19,4 +19,9 @@ class PoolIdentityTest {
         assertEquals("research-pool", PoolConfig.load(file).pool());
         assertTrue(loaded.verify("join".getBytes(), loaded.sign("join".getBytes())));
     }
+
+    @Test
+    void exposesAnSshStylePublicKeyFingerprint() {
+        assertTrue(PoolIdentity.generate("pool").sshFingerprint().matches("SHA256:[A-Za-z0-9_-]+"));
+    }
 }

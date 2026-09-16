@@ -9,7 +9,7 @@ OUTPUT ?= received
 CONTRIBUTION ?= 1073741824
 
 .DEFAULT_GOAL := help
-.PHONY: help test build init files upload server client cli-files cli-upload docker-build docker-transfer
+.PHONY: help test build init files upload server pool-server client cli-files cli-upload docker-build docker-transfer
 
 help:
 	@printf '%s\n' \
@@ -17,6 +17,7 @@ help:
 	  'make files CONFIG=pool.yaml' \
 	  'make upload CONFIG=pool.yaml FILE=./files/photo.bin' \
 	  'make server PORT=9000 OUTPUT=received KEY=<key-hex>' \
+	  'make pool-server CONFIG=pool.yaml LEASE_SECONDS=86400' \
 	  'make client HOST=127.0.0.1 PORT=9000 FILE=./photo.bin KEY=<key-hex>' \
 	  'make test' \
 	  'make docker-build KEY=<key-hex>' \
@@ -40,6 +41,9 @@ upload: build
 
 server: build
 	java -cp build/classes/java/main com.p2pft.server.P2PServer $(PORT) $(OUTPUT) $(KEY)
+
+pool-server: build
+	java -cp build/classes/java/main com.p2pft.server.P2PServer --config $(CONFIG) $(LEASE_SECONDS)
 
 client: build
 	@test -n "$(FILE)" || (printf '%s\n' 'FILE is required' >&2; exit 2)

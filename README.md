@@ -45,9 +45,20 @@ Use the project wrapper or Makefile as the normal interface. They build with Jav
 ./p2pft.sh upload pool.yaml ./files/photo.bin
 ./p2pft.sh server 9000 received <key-hex>
 ./p2pft.sh client 127.0.0.1 9000 ./photo.bin <key-hex>
+./p2pft.sh pool-server pool.yaml 86400
 ```
 
 Equivalent Makefile commands are available with `make help`, for example `make files CONFIG=pool.yaml` and `make upload CONFIG=pool.yaml FILE=./files/photo.bin`.
+
+## Seed Trade
+
+To join as a pool seed, launch `pool-server` with a config that declares a positive `contributed_bytes` value. The server announces its stable peer ID and SSH-style public-key fingerprint, then logs the lease expiration:
+
+```text
+event=seed_started peer=<peer-id> fingerprint=SHA256:<fingerprint> contributed_bytes=1073741824 lease_expires=...
+```
+
+The node is expected to stay online while its lease is active. If its lease expires or its server disappears, the pool may revoke its storage credit and mark its stored data for deletion. The current prototype records and exposes this policy but does not automatically delete data, because deletion is safe only after replication and seed health checks exist.
 
 ## Verify
 
