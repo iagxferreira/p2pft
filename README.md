@@ -8,6 +8,8 @@ P2PFT is an educational peer-to-peer file transfer project in Java. It uses a sm
 - TCP framing preserves message boundaries.
 - Receivers verify the complete SHA-256 digest before committing the file.
 - UDP broadcast discovery announces peers on the local network.
+- Every process generates a SHA-256 peer identity and includes it in discovery and transfer logs.
+- Structured logs report discovery counts, peer connections, file splitting, blob progress, verification, and rejection.
 - `QuorumValidator` demonstrates strict-majority validation of peer digest reports.
 
 This is a learning implementation, not production-grade secure file sharing. The current key model is a pre-shared 32-byte key. It does not yet authenticate peer identities, persist resumable transfers, or coordinate a multi-peer download.
@@ -22,6 +24,18 @@ This is a learning implementation, not production-grade secure file sharing. The
 ```bash
 mise exec gradle@9.7.0 -- mise exec java@temurin-25.0.4+7 -- gradle test
 ```
+
+The same commands are available through the `Makefile`: `make test`, `make build`, `make docker-build`, and `make docker-transfer`.
+
+Logs use stable `key=value` fields, for example:
+
+```text
+event=file_split file=photo.bin blobs=4 chunk_size=65536
+event=blob_sent peer=... blob=2 total=4
+event=file_verified file=photo.bin sha256=...
+```
+
+Discovery announcements contain the peer hash and TCP port. Call `Discovery.listenForPeers` from a coordinator or monitoring process to collect announcements and emit the number of peers found.
 
 ## Run
 

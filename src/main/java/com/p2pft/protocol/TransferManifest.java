@@ -8,13 +8,14 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
-public record TransferManifest(String fileId, String fileName, long size, int chunkSize, int chunkCount,
+public record TransferManifest(String senderPeerId, String fileId, String fileName, long size, int chunkSize, int chunkCount,
                                String fileHash) {
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     public void write(OutputStream output) throws IOException {
         var data = new DataOutputStream(output);
         data.writeInt(VERSION);
+        writeString(data, senderPeerId);
         writeString(data, fileId);
         writeString(data, fileName);
         data.writeLong(size);
@@ -26,7 +27,7 @@ public record TransferManifest(String fileId, String fileName, long size, int ch
     public static TransferManifest read(InputStream input) throws IOException {
         var data = new DataInputStream(input);
         if (data.readInt() != VERSION) throw new IOException("unsupported manifest version");
-        return new TransferManifest(readString(data), readString(data), data.readLong(), data.readInt(), data.readInt(), readString(data));
+        return new TransferManifest(readString(data), readString(data), readString(data), data.readLong(), data.readInt(), data.readInt(), readString(data));
     }
 
     private static void writeString(DataOutputStream output, String value) throws IOException {
