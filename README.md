@@ -1,6 +1,10 @@
 # P2PFT
 
-P2PFT is an educational peer-to-peer file transfer project in Java. It uses a small custom protocol rather than BitTorrent:
+P2PFT is an educational peer-to-peer file transfer and decentralized storage prototype in Java. It uses a small custom protocol rather than BitTorrent and is operated through `p2pft.sh` or the Makefile.
+
+The project explores a storage trade: a node contributes persistent disk space and stays online as a seed, then receives pool storage credit bounded by that contribution. Files are encrypted before entering the pool so storage nodes do not need the decryption key.
+
+## Current Scope
 
 - Files are split into 64 KiB chunks.
 - Each transfer starts with a versioned binary manifest containing the file digest.
@@ -12,7 +16,7 @@ P2PFT is an educational peer-to-peer file transfer project in Java. It uses a sm
 - Structured logs report discovery counts, peer connections, file splitting, blob progress, verification, and rejection.
 - `QuorumValidator` demonstrates strict-majority validation of peer digest reports.
 
-This is a learning implementation, not production-grade secure file sharing. The current key model is a pre-shared 32-byte key. It does not yet authenticate peer identities, persist resumable transfers, or coordinate a multi-peer download.
+This is a learning implementation, not production-grade secure file sharing. The current TCP transfer still uses a pre-shared 32-byte key, while Ed25519 identities and signed pool primitives are available for the next protocol layer. It does not yet authenticate TCP connections, persist resumable transfers, or coordinate a multi-peer download.
 
 ## Decentralized Bucket Model
 
@@ -155,8 +159,8 @@ The associated data for each encrypted chunk binds it to the transfer ID and chu
 
 ## Roadmap
 
-1. Peer identity and authenticated key exchange instead of a shared key.
-2. Signed manifests and signed peer reports.
-3. Multi-peer chunk sourcing with quorum-based acceptance per chunk.
-4. Resumable transfers and bounded disk/resource quotas.
-5. Discovery response validation and optional multicast/TCP fallback.
+1. Authenticate TCP connections with the configured Ed25519 identities.
+2. Route encrypted blobs to multiple pool seeds instead of one TCP receiver.
+3. Add signed manifests, signed peer reports, and quorum acceptance per blob.
+4. Add replication, seed health checks, and lease-based safe deletion.
+5. Add resumable transfers, encrypted file-key delivery, and threshold recovery.
