@@ -3,3 +3,4 @@ build/
 out/
 docker/received.bin
 *.log
+pool.yaml

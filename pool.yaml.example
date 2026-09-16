@@ -1,0 +1,5 @@
+# Generate a real file with PoolConfig.save(...); never commit private_key.
+pool: research-pool
+peer_id: replace-with-generated-peer-id
+public_key: replace-with-base64-ed25519-public-key
+private_key: replace-with-base64-ed25519-private-key
