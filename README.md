@@ -41,7 +41,30 @@ This is not yet a complete decentralized bucket network: membership admission, r
 mise exec gradle@9.7.0 -- mise exec java@temurin-25.0.4+7 -- gradle test
 ```
 
-The same commands are available through the `Makefile`: `make test`, `make build`, `make docker-build`, and `make docker-transfer`.
+The same commands are available through the `Makefile`: `make test`, `make build`, `make cli-files CONFIG=pool.yaml`, `make cli-upload CONFIG=pool.yaml FILE=./files/photo.bin`, `make docker-build`, and `make docker-transfer`.
+
+## Client CLI
+
+Initialize one config per client. The command generates the Ed25519 identity and writes the private key to the YAML file; keep that file private.
+
+```bash
+java -cp build/classes/java/main com.p2pft.client.P2PClientCli init \
+  pool.yaml research-pool ./files 127.0.0.1 9000 <key-hex> 1073741824
+```
+
+List files in the configured client directory:
+
+```bash
+java -cp build/classes/java/main com.p2pft.client.P2PClientCli files pool.yaml
+```
+
+Upload a file using the endpoint, transfer key, and peer identity from the same config:
+
+```bash
+java -cp build/classes/java/main com.p2pft.client.P2PClientCli upload pool.yaml ./files/photo.bin
+```
+
+The current `files` command lists the local client directory. A remote pool catalog and multi-node upload routing are separate protocol work; the current upload command uses the existing authenticated TCP prototype.
 
 Logs use stable `key=value` fields, for example:
 

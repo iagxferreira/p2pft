@@ -2,5 +2,9 @@
 pool: research-pool
 peer_id: replace-with-generated-peer-id
 contributed_bytes: 1073741824
+server_host: 127.0.0.1
+server_port: 9000
+transfer_key: replace-with-64-hex-byte-transfer-key
+files_directory: files
 public_key: replace-with-base64-ed25519-public-key
 private_key: replace-with-base64-ed25519-private-key

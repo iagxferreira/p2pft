@@ -6,16 +6,26 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public record PoolConfig(String pool, PoolIdentity identity, long contributedBytes) {
+public record PoolConfig(String pool, PoolIdentity identity, long contributedBytes, String serverHost,
+                         int serverPort, String transferKeyHex, Path filesDirectory) {
     public static void save(Path file, PoolIdentity identity) throws IOException {
-        save(file, identity, 0);
+        save(file, identity, 0, "127.0.0.1", 9000, "", Path.of("files"));
     }
 
     public static void save(Path file, PoolIdentity identity, long contributedBytes) throws IOException {
+        save(file, identity, contributedBytes, "127.0.0.1", 9000, "", Path.of("files"));
+    }
+
+    public static void save(Path file, PoolIdentity identity, long contributedBytes, String serverHost,
+                            int serverPort, String transferKeyHex, Path filesDirectory) throws IOException {
         if (contributedBytes < 0) throw new IllegalArgumentException("contribution must be non-negative");
         String yaml = "pool: " + identity.pool() + "\n"
                 + "peer_id: " + identity.peerId() + "\n"
                 + "contributed_bytes: " + contributedBytes + "\n"
+                + "server_host: " + serverHost + "\n"
+                + "server_port: " + serverPort + "\n"
+                + "transfer_key: " + transferKeyHex + "\n"
+                + "files_directory: " + filesDirectory + "\n"
                 + "public_key: " + identity.publicKey() + "\n"
                 + "private_key: " + identity.privateKey() + "\n";
         Files.writeString(file, yaml);
@@ -36,7 +46,12 @@ public record PoolConfig(String pool, PoolIdentity identity, long contributedByt
         try { contributedBytes = Long.parseLong(values.getOrDefault("contributed_bytes", "0")); }
         catch (NumberFormatException error) { throw new IOException("invalid contributed_bytes", error); }
         if (contributedBytes < 0) throw new IOException("contributed_bytes cannot be negative");
-        return new PoolConfig(pool, identity, contributedBytes);
+        int serverPort;
+        try { serverPort = Integer.parseInt(values.getOrDefault("server_port", "9000")); }
+        catch (NumberFormatException error) { throw new IOException("invalid server_port", error); }
+        if (serverPort < 1 || serverPort > 65535) throw new IOException("server_port out of range");
+        return new PoolConfig(pool, identity, contributedBytes, values.getOrDefault("server_host", "127.0.0.1"),
+                serverPort, values.getOrDefault("transfer_key", ""), Path.of(values.getOrDefault("files_directory", "files")));
     }
 
     private static String required(Map<String, String> values, String name) throws IOException {

@@ -20,14 +20,22 @@ public final class P2PClient {
     }
 
     public static void send(String host, int port, Path file, byte[] key) throws IOException {
+        send(host, port, file, key, IDENTITY.value());
+    }
+
+    public static void send(String host, int port, Path file, byte[] key, PoolIdentity identity) throws IOException {
+        send(host, port, file, key, identity.peerId());
+    }
+
+    public static void send(String host, int port, Path file, byte[] key, String peerId) throws IOException {
         byte[] content = Files.readAllBytes(file);
         String fileId = UUID.randomUUID().toString();
         String digest = Hashing.hex(Hashing.sha256(content));
         var chunks = Chunker.split(content, CHUNK_SIZE);
         LOGGER.split(file.getFileName().toString(), chunks.size(), CHUNK_SIZE);
-        var manifest = new TransferManifest(IDENTITY.value(), fileId, file.getFileName().toString(), content.length, CHUNK_SIZE, chunks.size(), digest);
+        var manifest = new TransferManifest(peerId, fileId, file.getFileName().toString(), content.length, CHUNK_SIZE, chunks.size(), digest);
         try (var socket = new Socket(host, port)) {
-            LOGGER.connected(IDENTITY.value(), host + ":" + port);
+            LOGGER.connected(peerId, host + ":" + port);
             ByteArrayOutputStream encoded = new ByteArrayOutputStream();
             manifest.write(encoded);
             FrameCodec.write(socket.getOutputStream(), encoded.toByteArray());
