@@ -14,6 +14,7 @@
 - Write a failing test before adding or changing protocol behavior.
 - Never write a received file before integrity validation succeeds.
 - Pool nodes must not receive or persist client decryption keys.
+- A node's advertised storage contribution must bound its pool storage quota.
 - Keep private identity and file keys out of source control and logs.
 - Treat wire-format changes as versioned protocol changes.
 - Keep commits atomic and semantic: one behavior or coherent structural change per commit, with messages such as `feat: add authenticated chunk transfer` or `test: cover quorum validation`.

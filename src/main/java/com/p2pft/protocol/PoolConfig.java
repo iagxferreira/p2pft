@@ -6,10 +6,16 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public record PoolConfig(String pool, PoolIdentity identity) {
+public record PoolConfig(String pool, PoolIdentity identity, long contributedBytes) {
     public static void save(Path file, PoolIdentity identity) throws IOException {
+        save(file, identity, 0);
+    }
+
+    public static void save(Path file, PoolIdentity identity, long contributedBytes) throws IOException {
+        if (contributedBytes < 0) throw new IllegalArgumentException("contribution must be non-negative");
         String yaml = "pool: " + identity.pool() + "\n"
                 + "peer_id: " + identity.peerId() + "\n"
+                + "contributed_bytes: " + contributedBytes + "\n"
                 + "public_key: " + identity.publicKey() + "\n"
                 + "private_key: " + identity.privateKey() + "\n";
         Files.writeString(file, yaml);
@@ -26,7 +32,11 @@ public record PoolConfig(String pool, PoolIdentity identity) {
         String pool = required(values, "pool");
         PoolIdentity identity = PoolIdentity.fromEncoded(pool, required(values, "public_key"), required(values, "private_key"));
         if (!identity.peerId().equals(required(values, "peer_id"))) throw new IOException("pool identity hash mismatch");
-        return new PoolConfig(pool, identity);
+        long contributedBytes;
+        try { contributedBytes = Long.parseLong(values.getOrDefault("contributed_bytes", "0")); }
+        catch (NumberFormatException error) { throw new IOException("invalid contributed_bytes", error); }
+        if (contributedBytes < 0) throw new IOException("contributed_bytes cannot be negative");
+        return new PoolConfig(pool, identity, contributedBytes);
     }
 
     private static String required(Map<String, String> values, String name) throws IOException {

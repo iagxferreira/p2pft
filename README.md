@@ -23,8 +23,12 @@ The pool primitives now support the intended storage boundary:
 - A peer proves possession of its private key by signing pool protocol messages.
 - The client generates a random file key and encrypts every blob before sending it to a pool.
 - `PoolBlobStore` stores ciphertext bytes only. It has no decryption API and cannot reconstruct plaintext without the client-held file key.
+- A node declares `contributed_bytes` in its pool YAML and its blob store rejects ciphertext beyond that quota.
+- `SeedPolicy` enforces the initial exchange rule: requested logical bytes cannot exceed contributed seed bytes.
 
-This is not yet a complete decentralized bucket network: membership admission, replicated blob routing, threshold recovery, and encrypted file-key delivery still need to be added. A pool node can store opaque encrypted blobs, but availability and recovery are not implemented by simply copying ciphertext to one node.
+For example, a node offering 1 GiB of persistent storage can request up to 1 GiB of logical pool storage. It must remain a seed for the encrypted blobs it stores; deleting or going offline would be a future health/lease violation, not a way to retain the storage credit.
+
+This is not yet a complete decentralized bucket network: membership admission, replicated blob routing, seed leases/health checks, threshold recovery, and encrypted file-key delivery still need to be added. A pool node can store opaque encrypted blobs, but availability and recovery are not implemented by simply copying ciphertext to one node.
 
 ## Requirements
 
