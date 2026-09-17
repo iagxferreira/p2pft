@@ -1,9 +1,25 @@
 services:
+  pool:
+    build: .
+    command: ["com.p2pft.server.P2PServer", "--config", "/config/pool.yaml", "${P2PFT_LEASE_SECONDS:-86400}"]
+    volumes:
+      - ./docker/client:/config:ro
+      - ./docker/pool-data:/app/pool-data
+    networks: [p2pft]
+
+  cli:
+    build: .
+    depends_on: [pool]
+    command: ["com.p2pft.client.P2PClientCli", "upload", "/config/pool.yaml", "/config/files/sample.bin"]
+    volumes:
+      - ./docker/client:/config:ro
+    networks: [p2pft]
+
   server:
     build: .
     command: ["com.p2pft.server.P2PServer", "9000", "/data/received", "${P2PFT_KEY:?set P2PFT_KEY to 64 hex characters}"]
     volumes:
-      - received:/data/received
+      - ./docker/received:/data/received
     networks: [p2pft]
 
   client:
@@ -16,6 +32,3 @@ services:
 
 networks:
   p2pft:
-
-volumes:
-  received:

@@ -17,6 +17,7 @@ public final class P2PClientCli {
         if (args.length == 0) throw usage();
         switch (args[0]) {
             case "init" -> init(args);
+            case "identity" -> identity(requireConfig(args));
             case "files" -> files(requireConfig(args));
             case "upload" -> upload(requireConfig(args), requireArgument(args, 2, "file"));
             default -> throw usage();
@@ -35,11 +36,22 @@ public final class P2PClientCli {
         Path configFile = Path.of(args[1]);
         PoolIdentity identity = PoolIdentity.generate(args[2]);
         PoolConfig.save(configFile, identity, Long.parseLong(args[7]), args[4], Integer.parseInt(args[5]), args[6], Path.of(args[3]));
+        Files.createDirectories(Path.of(args[3]));
         System.out.println("created pool config for peer " + identity.peerId());
+        System.out.println("transfer key stored in config; use identity to inspect public key details");
     }
 
     private static void files(PoolConfig config) throws IOException {
         for (Path file : listFiles(config)) System.out.printf("%s %d bytes%n", file.getFileName(), Files.size(file));
+    }
+
+    private static void identity(PoolConfig config) {
+        System.out.println("pool=" + config.pool());
+        System.out.println("peer_id=" + config.identity().peerId());
+        System.out.println("fingerprint=" + config.identity().sshFingerprint());
+        System.out.println("public_key=" + config.identity().publicKey());
+        System.out.println("contributed_bytes=" + config.contributedBytes());
+        System.out.println("server=" + config.serverHost() + ":" + config.serverPort());
     }
 
     private static void upload(PoolConfig config, String fileArgument) throws IOException {

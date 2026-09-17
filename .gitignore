@@ -4,3 +4,10 @@ out/
 docker/received.bin
 *.log
 pool.yaml
+docker/client/pool.yaml
+docker/client/files/*
+!docker/client/files/.gitkeep
+docker/pool-data/*
+!docker/pool-data/.gitkeep
+docker/received/*
+!docker/received/.gitkeep

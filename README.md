@@ -109,12 +109,11 @@ This is not yet a complete decentralized bucket network: membership admission, r
 Use the project wrapper or Makefile as the normal interface. They build with Java 25 automatically through mise.
 
 ```bash
-./p2pft.sh init pool.yaml research-pool ./files 127.0.0.1 9000 <key-hex> 1073741824
-./p2pft.sh files pool.yaml
-./p2pft.sh upload pool.yaml ./files/photo.bin
-./p2pft.sh server 9000 received <key-hex>
-./p2pft.sh client 127.0.0.1 9000 ./photo.bin <key-hex>
-./p2pft.sh pool-server pool.yaml 86400
+./p2pft.sh init
+./p2pft.sh identity pool.yaml
+./p2pft.sh list
+./p2pft.sh upload ./files/photo.bin
+./p2pft.sh start
 ```
 
 Equivalent Makefile commands are available with `make help`, for example `make files CONFIG=pool.yaml` and `make upload CONFIG=pool.yaml FILE=./files/photo.bin`.
@@ -148,23 +147,26 @@ The equivalent Makefile command is `make test`.
 Initialize one config per client. The command generates the Ed25519 identity and writes the private key to the YAML file; keep that file private.
 
 ```bash
-./p2pft.sh init \
-  pool.yaml research-pool ./files 127.0.0.1 9000 <key-hex> 1073741824
+./p2pft.sh init
 ```
+
+Defaults are `pool.yaml`, `research-pool`, `files/`, `127.0.0.1:9000`, and a 1 GiB contribution. Set `P2PFT_KEY`, `P2PFT_POOL`, `P2PFT_FILES`, `P2PFT_HOST`, `P2PFT_PORT`, or `P2PFT_CONTRIBUTION` to override them.
 
 List files in the configured client directory:
 
 ```bash
-./p2pft.sh files pool.yaml
+./p2pft.sh list
 ```
 
 Upload a file using the endpoint, transfer key, and peer identity from the same config:
 
 ```bash
-./p2pft.sh upload pool.yaml ./files/photo.bin
+./p2pft.sh upload ./files/photo.bin
 ```
 
 The current `files` command lists the local client directory. A remote pool catalog and multi-node upload routing are separate protocol work; the current upload command uses the existing authenticated TCP prototype.
+
+The `identity` command shows the pool name, peer ID, SSH-style fingerprint, public key, contribution, and server endpoint. It never prints the private key.
 
 Logs use stable `key=value` fields, for example:
 
@@ -183,31 +185,42 @@ Generate a 32-byte key as hexadecimal, for example with `openssl rand -hex 32`.
 Start the segregated server:
 
 ```bash
-./p2pft.sh server 9000 received <key-hex>
+./p2pft.sh start
 ```
 
 Send a file with the segregated client:
 
 ```bash
-./p2pft.sh client 127.0.0.1 9000 ./photo.bin <key-hex>
+./p2pft.sh send 127.0.0.1 9000 ./photo.bin <key-hex>
 ```
 
 The receiver writes the file only after decryption, chunk ordering, size, and whole-file digest checks succeed.
 
 ## Container transfer test
 
-Place a fixture at `docker/input/sample.bin`, then run the client and server in isolated containers:
+The Docker workflow keeps configuration, input files, and pool blobs on the host:
+
+```text
+docker/client/pool.yaml    generated identity and endpoint configuration
+docker/client/files/       client upload files
+docker/pool-data/          pool server storage
+docker/received/           legacy server output
+```
+
+Initialize the pool, inspect its public identity, start the seed, and upload as the CLI user:
 
 ```bash
 export P2PFT_KEY="$(openssl rand -hex 32)"
-mkdir -p docker/input
-printf 'container transfer fixture\n' > docker/input/sample.bin
-docker compose run --rm client
-docker compose cp server:/data/received/sample.bin ./docker/received.bin
-sha256sum docker/input/sample.bin docker/received.bin
+printf 'container transfer fixture\n' > docker/client/files/sample.bin
+make docker-init KEY="$P2PFT_KEY"
+make docker-identity
+make docker-pool KEY="$P2PFT_KEY"
+make docker-upload KEY="$P2PFT_KEY"
+sha256sum docker/client/files/sample.bin docker/pool-data/sample.bin
+make docker-down KEY="$P2PFT_KEY"
 ```
 
-The Docker build runs the complete unit test suite before producing the Java 25 runtime image.
+The transfer key is the current prototype's pre-shared AES-256 key. The Ed25519 private key is generated into `docker/client/pool.yaml`; inspect only the public identity with `make docker-identity`. The Docker build runs the complete unit test suite before producing the Java 25 runtime image.
 
 ## Protocol shape
 
