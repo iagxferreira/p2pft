@@ -18,6 +18,71 @@ The project explores a storage trade: a node contributes persistent disk space a
 
 This is a learning implementation, not production-grade secure file sharing. The current TCP transfer still uses a pre-shared 32-byte key, while Ed25519 identities and signed pool primitives are available for the next protocol layer. It does not yet authenticate TCP connections, persist resumable transfers, or coordinate a multi-peer download.
 
+## Architecture Proposal
+
+The target architecture separates the client that owns the file key from pool seeds that store encrypted blobs. The current repository implements the client, seed identity, discovery, quota, lease, and single TCP transfer foundations; multi-seed routing and replication are next.
+
+```mermaid
+flowchart LR
+    C[Client<br/>private file key] -->|encrypted blobs| G[Pool gateway<br/>membership and routing]
+    G --> S1[Seed A<br/>public identity<br/>contributed capacity]
+    G --> S2[Seed B<br/>public identity<br/>contributed capacity]
+    G --> S3[Seed C<br/>public identity<br/>contributed capacity]
+    S1 -->|ciphertext only| D[(Blob storage)]
+    S2 -->|ciphertext only| D
+    S3 -->|ciphertext only| D
+    G -. signed reports .-> Q[Quorum validator]
+    Q -. digest agreement .-> C
+```
+
+Pool seeds never receive the client decryption key. They store opaque ciphertext and prove their identity using an Ed25519 public key fingerprint.
+
+## Upload Flow
+
+This is the intended multi-seed flow. The current `upload` command follows the same first steps but sends through the existing single TCP receiver.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Discovery
+    participant Pool
+    participant SeedA as Seed A
+    participant SeedB as Seed B
+
+    Client->>Client: Generate file key
+    Client->>Client: Split file into blobs
+    Client->>Client: Encrypt and hash every blob
+    Client->>Discovery: Find online seeds
+    Discovery-->>Client: Peer IDs, fingerprints, capacities
+    Client->>Pool: Signed upload manifest
+    Pool->>SeedA: Assign blob indexes
+    Pool->>SeedB: Assign blob indexes
+    SeedA-->>Pool: Stored ciphertext and digest
+    SeedB-->>Pool: Stored ciphertext and digest
+    Pool-->>Client: Signed peer reports
+    Client->>Client: Accept only quorum-agreed digests
+```
+
+## Seed Trade
+
+Storage credit is bounded by the capacity a node contributes. A lease represents the period during which the node promises to remain online and seed its assigned blobs.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Configured
+    Configured --> Seeding: contribution > 0, server starts
+    Seeding --> Serving: lease active
+    Serving --> Serving: heartbeat and blob health
+    Serving --> Expired: lease reaches zero
+    Serving --> Offline: server stops
+    Expired --> Reclaimable: replication confirmed
+    Offline --> Reclaimable: replicas healthy
+    Reclaimable --> Deleted: pool policy permits cleanup
+    Expired --> Serving: lease renewed
+```
+
+The current prototype logs lease expiration but does not delete expired data until replication and health checks make cleanup safe.
+
 ## Decentralized Bucket Model
 
 The pool primitives now support the intended storage boundary:
